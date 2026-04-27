@@ -83,20 +83,23 @@ export default function ContactForm() {
     setErrorMessage("");
 
     try {
-      // Use FormData to prevent CORS preflight blocks (acts like native form submit)
-      const submitData = new FormData();
-      submitData.append("access_key", WEB3FORMS_KEY);
-      submitData.append("subject", `New Website Enquiry from ${form.name}`);
-      submitData.append("from_name", form.name);
-      submitData.append("name", form.name);
-      submitData.append("email", form.email);
-      submitData.append("phone", form.phone);
-      submitData.append("service", form.service);
-      submitData.append("message", form.message);
-
-      const response = await fetch("https://api.web3forms.com/submit", {
+      // Call our own Serverless Function to bypass local network blocks
+      const response = await fetch("/api/submit", {
         method: "POST",
-        body: submitData
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: `New Website Enquiry from ${form.name}`,
+          from_name: form.name,
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          service: form.service,
+          message: form.message,
+        })
       });
 
       const result = await response.json();
@@ -105,10 +108,9 @@ export default function ContactForm() {
         setStatus('success');
         setForm({ name: '', phone: '', email: '', service: '', message: '' });
       } else {
-        console.error("Web3Forms API Error:", result);
+        console.error("Submission Error:", result);
         setStatus('error');
-        setErrorMessage(result?.message || "Invalid Access Key or Web3Forms Error.");
-        if (formRef.current) formRef.current.submit(); // Ultimate Fallback
+        setErrorMessage(result?.message || "Internal Server error. Please try again later.");
       }
     } catch (err) {
       console.error("Network Error:", err);
@@ -195,8 +197,6 @@ export default function ContactForm() {
 
           <form
             ref={formRef}
-            action="https://api.web3forms.com/submit"
-            method="POST"
             className="contact-form"
             onSubmit={handleSubmit}
             noValidate
