@@ -110,7 +110,7 @@ export default function ContactForm() {
       } else {
         console.error("Submission Error:", result);
         setStatus('error');
-        setErrorMessage(result?.message || "Internal Server error. Please try again later.");
+        setErrorMessage(result?.message || result?.error || "Internal Server error. Please try again later.");
       }
     } catch (err) {
       console.error("Network Error:", err);
