@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import emailjs from '@emailjs/browser';
 import { motion } from 'framer-motion';
 import { FaUser, FaPhone, FaEnvelope, FaComment, FaTools, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import './ContactForm.css';
@@ -27,8 +28,10 @@ const isValidPhone = (phone) => /^[6-9]\d{9}$/.test(phone.replace(/\s/g, ''));
 // Validate email
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-// Web3Forms Access Key
-const WEB3FORMS_KEY = "47640863-087c-4fb3-87e6-b04fb9d1a602";
+// EmailJS Config
+const EMAILJS_SERVICE_ID = "service_8vjlpho";
+const EMAILJS_TEMPLATE_ID = "template_6obsaga";
+const EMAILJS_PUBLIC_KEY = "2W-ZpdgyKsAL1UM9w";
 
 export default function ContactForm() {
   const [form, setForm] = useState({
@@ -83,45 +86,31 @@ export default function ContactForm() {
     setErrorMessage("");
 
     try {
-      // Use FormData to prevent CORS preflight blocks (acts like native form submit)
-      const submitData = new FormData();
-      submitData.append("access_key", WEB3FORMS_KEY);
-      submitData.append("subject", `🎨 Painting Enquiry: ${form.name}`);
-      submitData.append("from_name", "Raj Colourings Notification");
-      submitData.append("replyto", form.email);
-      submitData.append("name", form.name);
-      submitData.append("email", form.email);
-      submitData.append("phone", form.phone);
-      submitData.append("service", form.service);
-      submitData.append("message", form.message);
+      const templateParams = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        service: form.service,
+        message: form.message,
+      };
 
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: submitData
-      });
+      const res = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      );
 
-      const result = await response.json();
-
-      if (response.ok && result?.success) {
+      if (res.status === 200) {
         setStatus('success');
         setForm({ name: '', phone: '', email: '', service: '', message: '' });
       } else {
-        console.error("Web3Forms API Error:", result);
-        setStatus('error');
-        setErrorMessage(result?.message || "Invalid Access Key or Web3Forms Error.");
-        if (formRef.current) formRef.current.submit(); // Ultimate Fallback
+        throw new Error("Failed to send email");
       }
     } catch (err) {
-      console.error("Network Error:", err);
-      if (formRef.current) {
-        // Ultimate Fallback: If fetch is entirely blocked (CORS/Adblock), natively submit
-        formRef.current.submit();
-      } else {
-        setStatus('error');
-        setErrorMessage(err.message === "Failed to fetch"
-          ? "Network Error (AdBlocker or Firewall blocking api.web3forms.com)"
-          : err.message);
-      }
+      console.error("EmailJS Error:", err);
+      setStatus('error');
+      setErrorMessage(err.text || err.message || "Failed to send email. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -203,12 +192,7 @@ export default function ContactForm() {
             noValidate
             aria-label="Contact form"
           >
-            {/* Native HTML Fallback Config */}
-            <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
-            <input type="hidden" name="subject" value={`🎨 Painting Enquiry: ${form.name}`} />
-            <input type="hidden" name="from_name" value="Raj Colourings Notification" />
-            <input type="hidden" name="replyto" value={form.email} />
-            <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
+            {/* EmailJS doesn't need hidden fields, everything is passed in templateParams */}
 
             {/* Name */}
             <div className="form-group">
