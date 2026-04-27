@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaUser, FaPhone, FaEnvelope, FaComment, FaTools, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUser, FaPhone, FaEnvelope, FaComment, FaTools, FaCheckCircle, FaExclamationTriangle, FaWhatsapp } from 'react-icons/fa';
 import './ContactForm.css';
 
 const services = [
