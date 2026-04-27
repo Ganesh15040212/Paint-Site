@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { FaPhoneAlt, FaArrowDown, FaPaintBrush, FaHome, FaSprayCan } from 'react-icons/fa';
+import logo from '../assets/logo.png';
 import './Hero.css';
 
 export default function Hero() {
@@ -134,8 +135,7 @@ export default function Hero() {
               </div>
             </div>
             <div className="hero-main-circle">
-              <FaPaintBrush className="circle-icon" />
-              <p className="circle-text">Raj<br/>Colourings</p>
+              <img src={logo} alt="Raj Colourings Logo" className="hero-circle-logo" />
             </div>
             <div className="hero-card hero-card-bottom">
               <FaSprayCan className="hcard-icon" />

@@ -1,4 +1,5 @@
-import { FaPaintBrush, FaPhone, FaMapMarkerAlt, FaFacebook, FaInstagram, FaWhatsapp, FaArrowUp } from 'react-icons/fa';
+import { FaPhone, FaMapMarkerAlt, FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa';
+import logo from '../assets/logo.png';
 import './Footer.css';
 
 const quickLinks = [
@@ -35,8 +36,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="footer-brand">
             <div className="footer-logo">
-              <FaPaintBrush className="footer-logo-icon" aria-hidden="true" />
-              <span>Raj <span className="footer-logo-accent">Colourings</span></span>
+              <img src={logo} alt="Raj Colourings Logo" className="footer-logo-img" />
             </div>
             <p className="footer-tagline">
               Professional Painting & House Cleaning Services in Coimbatore.

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FaPaintBrush, FaBars, FaTimes, FaPhone } from 'react-icons/fa';
+import { FaBars, FaTimes, FaPhone } from 'react-icons/fa';
+import logo from '../assets/logo.png';
 import './Navbar.css';
 
 const navLinks = [
@@ -37,10 +38,7 @@ export default function Navbar() {
       <div className="container navbar-inner">
         {/* Logo */}
         <a href="#home" className="navbar-logo" onClick={(e) => handleNavClick(e, '#home')} aria-label="Raj Colourings Home">
-          <span className="logo-icon"><FaPaintBrush /></span>
-          <span className="logo-text">
-            Raj <span className="logo-accent">Colourings</span>
-          </span>
+          <img src={logo} alt="Raj Colourings Logo" className="navbar-logo-img" />
         </a>
 
         {/* Desktop Nav */}
