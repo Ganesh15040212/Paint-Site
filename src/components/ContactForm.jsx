@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaUser, FaPhone, FaEnvelope, FaComment, FaTools, FaCheckCircle, FaExclamationTriangle, FaWhatsapp } from 'react-icons/fa';
+import { FaUser, FaPhone, FaEnvelope, FaComment, FaTools, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import './ContactForm.css';
 
 const services = [
@@ -27,8 +27,8 @@ const isValidPhone = (phone) => /^[6-9]\d{9}$/.test(phone.replace(/\s/g, ''));
 // Validate email
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-// FormSubmit.co Endpoint - Using a robust service that doesn't need complex proxying
-const FORMSUBMIT_EMAIL = "ganeshmanivnr2004@gmail.com";
+// Web3Forms Access Key
+const WEB3FORMS_KEY = "47640863-087c-4fb3-87e6-b04fb9d1a602";
 
 export default function ContactForm() {
   const [form, setForm] = useState({
@@ -39,12 +39,6 @@ export default function ContactForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const formRef = useRef(null);
-
-  // WhatsApp Fallback: If email fails, user can send via WhatsApp effortlessly
-  const sendViaWhatsApp = () => {
-    const text = `*New Website Enquiry*%0A*Name:* ${form.name}%0A*Phone:* ${form.phone}%0A*Email:* ${form.email}%0A*Service:* ${form.service}%0A*Message:* ${form.message}`;
-    window.open(`https://wa.me/919659717059?text=${text}`, '_blank');
-  };
 
   const validate = () => {
     const errs = {};
@@ -89,36 +83,45 @@ export default function ContactForm() {
     setErrorMessage("");
 
     try {
-      // Use FormSubmit.co AJAX submission
-      const response = await fetch(`https://formsubmit.co/ajax/${FORMSUBMIT_EMAIL}`, {
+      // Use FormData to prevent CORS preflight blocks (acts like native form submit)
+      const submitData = new FormData();
+      submitData.append("access_key", WEB3FORMS_KEY);
+      submitData.append("subject", `🎨 Painting Enquiry: ${form.name}`);
+      submitData.append("from_name", "Raj Colourings Notification");
+      submitData.append("replyto", form.email);
+      submitData.append("name", form.name);
+      submitData.append("email", form.email);
+      submitData.append("phone", form.phone);
+      submitData.append("service", form.service);
+      submitData.append("message", form.message);
+
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          _subject: `New Enquiry: ${form.name}`,
-          Name: form.name,
-          Phone: form.phone,
-          Email: form.email,
-          Service: form.service,
-          Message: form.message,
-          _template: 'table'
-        })
+        body: submitData
       });
 
       const result = await response.json();
 
-      if (response.ok && result?.success === "true") {
+      if (response.ok && result?.success) {
         setStatus('success');
         setForm({ name: '', phone: '', email: '', service: '', message: '' });
       } else {
-        throw new Error(result?.message || "Service error. Please use WhatsApp for urgent enquiries.");
+        console.error("Web3Forms API Error:", result);
+        setStatus('error');
+        setErrorMessage(result?.message || "Invalid Access Key or Web3Forms Error.");
+        if (formRef.current) formRef.current.submit(); // Ultimate Fallback
       }
     } catch (err) {
-      console.error("Submission Error:", err);
-      setStatus('error');
-      setErrorMessage("Network error or service blocked. Please use the WhatsApp button below to send your enquiry instantly.");
+      console.error("Network Error:", err);
+      if (formRef.current) {
+        // Ultimate Fallback: If fetch is entirely blocked (CORS/Adblock), natively submit
+        formRef.current.submit();
+      } else {
+        setStatus('error');
+        setErrorMessage(err.message === "Failed to fetch"
+          ? "Network Error (AdBlocker or Firewall blocking api.web3forms.com)"
+          : err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -182,44 +185,31 @@ export default function ContactForm() {
         >
           {status === 'success' && (
             <div className="form-alert form-alert-success" role="alert">
-              <FaCheckCircle /> Thank you! We have received your enquiry.
-              <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>If you don't hear from us in 2 hours, please message us on WhatsApp.</p>
+              <FaCheckCircle /> Thank you! We have received your enquiry. We will contact you shortly.
             </div>
           )}
           {status === 'error' && (
-            <div className="form-alert form-alert-error" role="alert" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <FaExclamationTriangle /> {errorMessage}
-              </div>
-              <button
-                type="button"
-                onClick={sendViaWhatsApp}
-                className="btn-whatsapp-fallback"
-                style={{
-                  background: '#25D366',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.8rem 1.2rem',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <FaWhatsapp /> Send via WhatsApp Now
-              </button>
+            <div className="form-alert form-alert-error" role="alert">
+              <FaExclamationTriangle /> {errorMessage || "Something went wrong. Please call us directly at 96597 17059."}
             </div>
           )}
 
           <form
+            ref={formRef}
+            action="https://api.web3forms.com/submit"
+            method="POST"
             className="contact-form"
             onSubmit={handleSubmit}
             noValidate
             aria-label="Contact form"
           >
+            {/* Native HTML Fallback Config */}
+            <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
+            <input type="hidden" name="subject" value={`🎨 Painting Enquiry: ${form.name}`} />
+            <input type="hidden" name="from_name" value="Raj Colourings Notification" />
+            <input type="hidden" name="replyto" value={form.email} />
+            <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
+
             {/* Name */}
             <div className="form-group">
               <label htmlFor="contact-name" className="form-label">
@@ -326,47 +316,19 @@ export default function ContactForm() {
               {errors.message && <p id="message-error" className="form-error" role="alert">{errors.message}</p>}
             </div>
 
-            {/* Submit Buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <button
-                type="submit"
-                id="contact-submit-btn"
-                className="btn-submit"
-                disabled={loading}
-                aria-busy={loading}
-              >
-                {loading ? (
-                  <><span className="spinner" aria-hidden="true"></span> Sending...</>
-                ) : (
-                  'Send Enquiry'
-                )}
-              </button>
-
-              <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
-                — OR —
-              </div>
-
-              <button
-                type="button"
-                onClick={sendViaWhatsApp}
-                className="btn-whatsapp-secondary"
-                style={{
-                  background: 'transparent',
-                  color: '#25D366',
-                  border: '2px solid #25D366',
-                  padding: '0.8rem 1.2rem',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <FaWhatsapp /> Chat on WhatsApp
-              </button>
-            </div>
+            <button
+              type="submit"
+              id="contact-submit-btn"
+              className="btn-submit"
+              disabled={loading}
+              aria-busy={loading}
+            >
+              {loading ? (
+                <><span className="spinner" aria-hidden="true"></span> Sending...</>
+              ) : (
+                'Send Enquiry'
+              )}
+            </button>
           </form>
         </motion.div>
       </div>
